@@ -30,14 +30,9 @@ JSON是一种轻量级的数据交换格式，语法很简单：
 
 数据的存放方式是键值对的样式。举个例子：
 ```json
-{"people":[{
-	"firstName": "Brett",
-	"lastName":"McLaughlin"
-	},
-	{
-	"firstName":"Jason",
-	"lastName":"Hunter"
-	}
+{"people":[
+	{"firstName": "Brett","lastName":"McLaughlin"},
+	{"firstName":"Jason","lastName":"Hunter"}
 	]}
 ```
 
@@ -102,7 +97,56 @@ JSON是一种轻量级的数据交换格式，语法很简单：
 	}
 ```
 
+上面的代码中有三个`button`，代表GET方式发送异步请求、GET方式发送同步请求和POST方式发送异步请求。前两个以GET方式，代码上可以看出在`xmlhttp.open`的传入参数上有不同，这是第三个布尔类型的参数作用是指定此请求是否为异步方式，默认为true。
 
-
+这里，GET和POST又多了一些差别，他们在AJAX发送请求的时候传数据的方式不同，GET方式是在地址的后面拼接上数据，而POST方式是在`xmlhttp.send()`方法中以参数的形式传送数据。
 
 ## 引入Jquery写AJAX
+
+Jquery中也封装了AJAX的方法，而且更加强大。建议先去看看文档，再稍微练习一下，这样就算忘了具体的写法也关系，后头看看文档也就会了。
+
+下面的代码作为示例可以常常看看：
+
+```html
+<input id="btn1" type="button" value="get请求">
+<input id="btn2" type="button" value="post请求">
+<input id="btn3" type="button" value="ajax请求">
+
+<script type="text/javascript" src="/Ajax/js/jquery-1.7.2.js"></script>
+<script type="text/javascript">
+	$(function() {
+		$("#btn1").click(function() {
+			$.get("/Ajax/s4", {
+				name : "John",
+				time : "2pm"
+			},function(data) {
+				alert(data.name);
+			}, "json");})
+
+		$("#btn2").click(function() {
+			$.post("/Ajax/s4", {
+				name : "John",
+				time : "2pm"
+			}, function(data) {
+				alert(data.name);
+			}, "json");})
+
+		$("#btn3").click(function() {
+			$.ajax({
+				type : "GET",
+				url : "/Ajax/s4",
+				data : "name=John&time=Boston",
+				success : function(msg) {
+					alert(msg.height);
+				},
+				statusCode : {
+					404 : function() {
+						alert('欢迎来到火星!');
+					},
+					500 : function(){
+						alert('服务器出错!')
+					}
+				},
+				dataType : "json"});})
+	})
+```
