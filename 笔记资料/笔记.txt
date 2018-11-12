@@ -1,0 +1,123 @@
+
+ javaEE包括13门规范 在课程中主要学习 servlet技术 和 jsp技术
+ 其中 servlet规范包括三个技术点：servlet  listener  filter
+
+【监听器 Listener】
+ 1．什么是监听器？
+ 监听器就是监听某个对象的的状态变化的组件
+ 监听器的相关概念：
+ 事件源：被监听的对象  ----- 三个域对象 request  session  servletContext
+ 监听器：监听事件源对象  事件源对象的状态的变化都会触发监听器 ---- 6+2
+ 注册监听器：将监听器与事件源进行绑定
+ 响应行为：监听器监听到事件源的状态变化时 所涉及的功能代码 ---- 程序员编写代码
+
+ 2．监听器有哪些？
+
+ 3．监听三大域对象的创建与销毁的监听器编写步骤（重点）：
+　　　a、编写一个监听器类去实现监听器接口
+　　　b、覆盖监听器的方法
+　　　c、需要在web.xml中进行配置---注册
+
+ 4．监听三大域对象的属性变化的
+   (1)域对象的通用的方法：
+      setAttribute(name,value)
+       --- 触发添加属性的监听器的方法   
+       --- 触发修改属性的监听器的方法 
+      getAttribute(name)
+      removeAttribute(name)  
+       --- 触发删除属性的监听器的方法 
+
+   (2)ServletContextAttibuteListener监听器
+      attributeAdded
+      attributeRemoved
+      attributeReplaced
+   (3) HttpSessionAttributeListener监听器（同上）
+   (4) ServletRequestAriibuteListenr监听器（同上）
+
+ 5．与session中的绑定的对象相关的监听器（对象感知监听器）
+  (1)即将要被绑定到session中的对象有几种状态
+
+    绑定状态：就一个对象被放到session域中
+    解绑状态：就是这个对象从session域中移除了
+
+    钝化状态：是将session内存中的对象持久化（序列化）到磁盘
+    活化状态：就是将磁盘上的对象再次恢复到session内存中
+
+  (2)绑定与解绑的监听器HttpSessionBindingListener
+
+
+  (3)钝化与活化的监听器HttpSessionActivationListener
+
+   面试题：当用户很多时，怎样对服务器进行优化？   
+   
+   # 可以通过配置文件 指定对象钝化时间 --- 对象多长时间不用被钝化
+     在META-INF下创建一个context.xml
+
+【过滤器 Filter】
+ 1．filter的简介
+  filter是对客户端访问资源的过滤，
+  符合条件放行，
+  不符合条件不放行，
+  并且可以对目标资源访问前后进行逻辑处理
+
+ 2. 快速入门
+  步骤：
+   1）编写一个过滤器的类实现Filter接口
+   2）实现接口中尚未实现的方法(着重实现doFilter方法)
+   3）在web.xml中进行配置(主要是配置要对哪些资源进行过滤)
+
+ 3．Filter的API
+  (1)filter生命周期及其与生命周期相关的方法
+   Filter接口有三个方法，并且这个三个都是与Filter的生命相关的方法
+    init(Filterconfig)：代表filter对象初始化方法 filter对象创建时执行
+    doFilter(ServletRequest,ServletResponse,FilterCha)：
+	代表filter执行过滤的核心方法，如果某资源在已经被配置到这个filter进行过滤的话
+	那么每次访问这个资源都会执行doFilter方法
+    destory()：代表是filter销毁方法 当filter对象销毁时执行该方法
+
+   Filter对象的生命周期：
+   Filter何时创建：服务器启动时就创建该filter对象
+   Filter何时销毁：服务器关闭时filter销毁
+
+  (2)Filter的AP详解
+     1）init(FilterConfig)
+      其中参数config代表 该Filter对象的配置信息的对象，内部封装是该filter的配置信息。
+     2）destory()方法
+      filter对象销毁时执行
+     3）doFilter方法
+      doFilter(ServletRequest,ServletResponse,FilterChain)
+      其中的参数：
+      ServletRequest/ServletResponse：每次在执行doFilter方法时web容器负责创建一个request和一个response对象作为doFilter的参数传递进来。                                      该request个该response就是在访问目标资源的service方法时的request和response。
+      FilterChain：过滤器链对象，通过该对象的doFilter方法可以放行该请求
+
+ 4．Filter的配置
+
+   url-pattern配置时
+   1）完全匹配  /sertvle1
+   2）目录匹配  /aaa/bbb/* ----最多的
+   /user/*：访问前台的资源进入此过滤器
+   /admin/*：访问后台的资源时执行此过滤器
+   3）扩展名匹配  *.abc  *.jsp
+
+  注意：url-pattern可以使用servlet-name替代，也可以混用
+
+
+  # dispatcher：访问的方式
+   REQUEST：默认值，代表直接访问某个资源时执行filter
+   FORWARD：转发时才执行filter
+   INCLUDE: 包含资源时执行filter
+   ERROR：发生错误时 进行跳转是执行filter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
