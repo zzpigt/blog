@@ -1,3 +1,10 @@
+---
+title: 【JAVAEE知识】监听器Listener与过滤器Filter
+date: 2018-11-14 21:42:45
+tags: [JAVA,JavaEE,技术贴]
+description: "这两种技术在后面的框架开发中用的并不多了，尤其是过滤器，基本被SpringMVC中的拦截器取代。但是这不代表它们不重要，热爱编程的伙伴更是需要这些知识打好基础。"
+
+---
 **JavaEE**已知的就有十几门规范（大概13种），而我现在掌握的主要就**Servlet技术**和**JSP技术**。
 
 其中**Servlet规范**有三个技术点：
@@ -17,7 +24,8 @@ Servlet之前已经详细介绍过了，使用起来也非常容易，接受客�
 - 注册监听器：将监听器与事件源进行绑定
 - 响应行为：监听器监听到事件源的状态变化时**所涉及的功能代码**
 
- ### 监听器的种类
+
+### 监听器的种类
 
  ![监听器种类]()
 
@@ -69,6 +77,8 @@ public class MyServletContextListener implements ServletContextListener {
 	}
 }
 ```
+
+>上面代码中有一段是模拟银行系统计息的方法
 
 上面的代码是为了监听ServletContext域对象的创建和销毁而写的一个类，现在这个类创建出来，可以说就是我们手上的一个拥有明确作用的监听器了。为了对比，我这里写放上一个对ServletContext域对象的属性变化进行监听的监听器。
 
@@ -172,10 +182,10 @@ public class MyServletContextAttrListener implements ServletContextAttributeList
 
 当用户量多的时候, 多数的用户并没有操作session, 但是它是占用内存的，对服务器是存在压力的。所以可以对这些用户的session进行钝化(持久化到磁盘) 减少内存的占用，稍稍减轻服务器的压力。
   
-了解上面说的这些，怎么用这两个监听器，与上面六个监听器不同的是，这里监听对象不再是域对象，所以编写步骤不同（以监听User类为例，是在User类上添加接口）：
+了解上面说的这些，怎么用这两个监听器呢？与上面六个监听器不同的是，这里监听对象不再是域对象，所以编写步骤不同（以监听User类为例，是在User类上添加接口）：
 
 
-***只要一步***：对需要监听的对象添加监听器接口，还有别忘了要序列化。 
+***仅需一步***：对需要监听的对象添加监听器接口，还有别忘了要序列化。 
 
 ```java
 public class User implements HttpSessionBindingListener, HttpSessionActivationListener, Serializable{
@@ -231,66 +241,122 @@ public class User implements HttpSessionBindingListener, HttpSessionActivationLi
 - maxIdleSwap ：设置session中的对象多长时间不使用就钝化
 - directory ：设置钝化后的对象的文件写到磁盘的哪个目录下
 
->默认：配置钝化的对象文件在 work/catalina/localhost/钝化文件
+>默认：配置钝化的对象文件在Tomcat：work/catalina/localhost/钝化文件
 
 
 
-【过滤器 Filter】
- 1．filter的简介
-  filter是对客户端访问资源的过滤，
-  符合条件放行，
-  不符合条件不放行，
-  并且可以对目标资源访问前后进行逻辑处理
+## 过滤器 Filter
 
- 2. 快速入门
-  步骤：
-   1）编写一个过滤器的类实现Filter接口
-   2）实现接口中尚未实现的方法(着重实现doFilter方法)
-   3）在web.xml中进行配置(主要是配置要对哪些资源进行过滤)
+**Filter**是对客户端访问资源的过滤，设置一些条件。如果符合条件就放行，而不符合条件就不放行，并且可以对目标资源访问前后进行逻辑处理，这就涉及到AOP的思想，暂且不提，后面介绍框架的时候会着重说到。
 
- 3．Filter的API
-  (1)filter生命周期及其与生命周期相关的方法
-   Filter接口有三个方法，并且这个三个都是与Filter的生命相关的方法
-    init(Filterconfig)：代表filter对象初始化方法 filter对象创建时执行
-    doFilter(ServletRequest,ServletResponse,FilterCha)：
-	代表filter执行过滤的核心方法，如果某资源在已经被配置到这个filter进行过滤的话
-	那么每次访问这个资源都会执行doFilter方法
-    destory()：代表是filter销毁方法 当filter对象销毁时执行该方法
+好了，有了上面介绍过Listener的基础，这里我们可以快速入门。Filter的编写步骤也可以分为三步：
 
-   Filter对象的生命周期：
-   Filter何时创建：服务器启动时就创建该filter对象
-   Filter何时销毁：服务器关闭时filter销毁
+***第一步：编写一个过滤器的类实现Filter接口，紧接着就是第二步：实现接口中尚未实现的方法(着重实现doFilter方法)***
+ 
+```java
+ public class LoginFilter implements Filter {
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		HttpServletRequest httpRequest = ((HttpServletRequest)request);
+		Object user = httpRequest.getSession().getAttribute("user");
+		String url = httpRequest.getRequestURL().toString();
+			
+		// 如果登录了就放行, 或者访问的就是登录页面
+		if(user != null || url.contains("login.jsp")){
+			System.out.println("放行!");
+			chain.doFilter(request, response);
+		}else{
+			System.out.println("没登录 跳转!");
+			// 如果没登录, 就重定向到登录页面
+			((HttpServletResponse)response).sendRedirect("/Servlet_Filter/user/login.jsp");
+		}
+	}
 
-  (2)Filter的AP详解
-     1）init(FilterConfig)
-      其中参数config代表 该Filter对象的配置信息的对象，内部封装是该filter的配置信息。
-     2）destory()方法
-      filter对象销毁时执行
-     3）doFilter方法
-      doFilter(ServletRequest,ServletResponse,FilterChain)
-      其中的参数：
-      ServletRequest/ServletResponse：每次在执行doFilter方法时web容器负责创建一个request和一个response对象作为doFilter的参数传递进来。                                      该request个该response就是在访问目标资源的service方法时的request和response。
-      FilterChain：过滤器链对象，通过该对象的doFilter方法可以放行该请求
+	public void init(FilterConfig fConfig) throws ServletException {
+	}
+	public void destroy() {
+	}
+}
 
- 4．Filter的配置
+```
 
-   url-pattern配置时
-   1）完全匹配  /sertvle1
-   2）目录匹配  /aaa/bbb/* ----最多的
-   /user/*：访问前台的资源进入此过滤器
-   /admin/*：访问后台的资源时执行此过滤器
-   3）扩展名匹配  *.abc  *.jsp
+>代码中有一段是演示没有登录的情况下，访问其他资源将会被过滤重定向到登入界面
 
-  注意：url-pattern可以使用servlet-name替代，也可以混用
+上面的这段代码中，实现的Filter借口中三个方法：
 
+- `init(Filterconfig)`：代表Filter对象初始化方法，Filter对象创建时执行
+- `doFilter(ServletRequest,ServletResponse,FilterCha)`：代表Filter执行过滤的核心方法，如果某资源在已经被配置到这个Filter进行过滤的话，那么每次访问这个资源都会执行doFilter方法
+- `destory()`：代表是Filter销毁方法，当Filter对象销毁时执行该方法
 
-  # dispatcher：访问的方式
-   REQUEST：默认值，代表直接访问某个资源时执行filter
-   FORWARD：转发时才执行filter
-   INCLUDE: 包含资源时执行filter
-   ERROR：发生错误时 进行跳转是执行filter
+这三个方法也可以解释**Filter**的生命周期：
+
+- Filter何时创建：服务器启动时就创建该Filter对象
+- Filter何时销毁：服务器关闭时Filter销毁
+
+如果需要对上面三个方法有更多的了解，那么就必须知道三个方法中参数的作用了：
+
+1）***init(FilterConfig)***：其中参数config代表该Filter对象的配置信息的对象，内部封装是该Filter的配置信息。
+2）***destory()***：Filter对象销毁时执行，不需要参数，就不用多说。
+3）***doFilter(ServletRequest,ServletResponse,FilterChain)***：其中的参数`ServletRequest`/`ServletResponse`是每次在执行doFilter方法时web容器负责创建一个request和一个response对象作为doFilter的参数传递进来的。request个该response就是在访问目标资源的service方法时的request和response。`FilterChain`类型参数为过滤器链对象，通过该对象的doFilter方法可以放行该请求。
 
 
+在用户发送请求到服务器，然后经过过滤器的条件判断是否放行。就是在没有AOP思想的情况下，我们也能运用这个过滤器解决请求中乱码的问题。 
+ 
+ 
+***第三步：在web.xml中进行配置(主要是配置要对哪些资源进行过滤)***
+
+```xml
+<filter>
+    <filter-name>LoginFilter</filter-name>
+    <filter-class>cn.zzpigt.filter.LoginFilter</filter-class>
+</filter>
+<filter-mapping>
+    <filter-name>LoginFilter</filter-name>
+    <url-pattern>/s1</url-pattern>
+</filter-mapping>
+```
+
+这里对web.xml文件的配置比监听器要复杂一点，但是也非常容易看懂。先配置`filter`标签，注册我们创建的这个过滤器，给这个过滤器取个名字；然后配置对应的映射`filter-mapping`标签，和`filter`名字必须要相同，再就是配置要过滤的资源了。上面代码中`/s1`代表的意思很难解释，需要在被过滤的资源标上注解，我这里附上这个资源的代码。
+
+```java
+@WebServlet("/s1")
+public class LoginServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		System.out.println("用户访问了LoginServlet");
+		response.getWriter().write("欢迎光临");
+	}
+}
+
+```
+
+
+`url-pattern`子标签配置时，不止上面代码中一种配置方式。总结一下这个标签的所有配置方式：
+
+- 完全匹配 --- `/s1`
+- 目录匹配 --- `/aaa/bbb/*` (这种配置最多)
+- 扩展名匹配 --- `*.abc` 或 `*.jsp`
+
+目录匹配方式应用场景非常多，举例：
+1）`/user/*`：访问前台的资源进入此过滤器
+2）`/admin/*`：访问后台的资源时执行此过滤器
+
+>注意：`url-pattern`可以使用`servlet-name`替代，也可以混用
+
+
+	拓展：dispatcher标签指定哪一种访问web资源的方式会被拦截，可选值有四种：
+   		- REQUEST：默认值，代表直接访问某个资源时执行filter
+   		- FORWARD：转发时才执行filter
+   		- INCLUDE: 包含资源时执行filter
+   		- ERROR：发生错误时 进行跳转是执行filter
+
+
+
+
+
+
+  
 
 
 
